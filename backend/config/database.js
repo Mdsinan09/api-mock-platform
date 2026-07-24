@@ -23,6 +23,12 @@ if (isProd && !sslDisabled) {
   };
 }
 
+let dbHost = process.env.DB_HOST || 'localhost';
+if (dbHost.startsWith('dpg-') && !dbHost.includes('.') && process.env.USE_EXTERNAL_DB === 'true') {
+  const region = process.env.DB_REGION || 'singapore';
+  dbHost = `${dbHost}.${region}-postgres.render.com`;
+}
+
 const sequelize = process.env.DATABASE_URL
   ? new Sequelize(process.env.DATABASE_URL, {
       dialect: 'postgres',
@@ -40,7 +46,7 @@ const sequelize = process.env.DATABASE_URL
       process.env.DB_USER || 'postgres',
       process.env.DB_PASS || 'postgres',
       {
-        host: process.env.DB_HOST || 'localhost',
+        host: dbHost,
         port: parseInt(process.env.DB_PORT, 10) || 5432,
         dialect: 'postgres',
         logging: false,
