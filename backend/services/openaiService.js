@@ -3,11 +3,20 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  timeout: 5000,
-  maxRetries: 1,
-});
+let openai = null;
+
+const getOpenAIClient = () => {
+  const apiKey = process.env.OPENAI_API_KEY || process.env.OPEN_API_KEY;
+  if (!apiKey || apiKey.trim() === '') return null;
+  if (!openai) {
+    openai = new OpenAI({
+      apiKey,
+      timeout: 5000,
+      maxRetries: 1,
+    });
+  }
+  return openai;
+};
 
 /**
  * Generate realistic mock data using OpenAI.
@@ -16,9 +25,10 @@ const openai = new OpenAI({
  */
 export const generateMockData = async (jsonSchema, context = {}) => {
   try {
-    if (!process.env.OPENAI_API_KEY) return null;
+    const client = getOpenAIClient();
+    if (!client) return null;
 
-    const response = await openai.chat.completions.create({
+    const response = await client.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [
         {
