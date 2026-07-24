@@ -1,5 +1,6 @@
 import Schema from '../models/Schema.js';
-import { generateFromSchema } from '../services/mockGenerator.js';
+import { generateMockData } from '../services/openaiService.js';
+import { generateFallback } from '../services/mockGenerator.js';
 import { resolveRefs } from '../utils/resolveRefs.js';
 
 const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options', 'trace'];
@@ -135,15 +136,35 @@ export const handleMockRequest = async (req, res, next) => {
       });
     }
 
-    // ── 5. Generate & return mock data ──
+    // ── 5. Generate mock data: OpenAI first, local generator as fallback ──
     const resolvedSchema = resolveRefs(responseSchema, openapi);
-    const mockData = generateFromSchema(resolvedSchema);
+    const context = {
+      path: matchedPath,
+      method: req.method,
+      operationId: operation.operationId || '',
+    };
+
+    let mockData = null;
+    let usedAI = false;
+
+    if (process.env.OPENAI_API_KEY?.startsWith('sk-')) {
+      mockData = await generateMockData(resolvedSchema, context);
+      usedAI = mockData !== null;
+    } else if (!global._openaiWarningLogged) {
+      console.warn('[MockController] OPENAI_API_KEY not configured — using fallback generator');
+      global._openaiWarningLogged = true;
+    }
+
+    if (mockData === null) {
+      mockData = generateFallback(resolvedSchema);
+    }
 
     // Optional: add mock headers for realism
     res.setHeader('X-Mock-Generated', 'true');
     res.setHeader('X-Mock-Schema-Id', schemaId);
     res.setHeader('X-Mock-Response-Code', responseCode);
     if (inferred) res.setHeader('X-Mock-Inferred', 'true');
+    if (usedAI) res.setHeader('X-Mock-AI', 'true');
 
     return res.status(200).json(mockData);
   } catch (error) {

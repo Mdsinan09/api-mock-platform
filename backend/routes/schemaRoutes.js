@@ -4,7 +4,9 @@ import {
   uploadSchema,
   getAllSchemas,
   getSchemaById,
-  getEndpoints
+  getEndpoints,
+  updateSchema,
+  deleteSchema
 } from '../controllers/schemaController.js';
 
 const router = Router();
@@ -28,5 +30,7 @@ router.post(
 router.get('/', getAllSchemas);
 router.get('/:id', getSchemaById);
 router.get('/:id/endpoints', getEndpoints);
+router.put('/:id', updateSchema);
+router.delete('/:id', deleteSchema);
 
 export default router;

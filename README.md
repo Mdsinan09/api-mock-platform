@@ -1,75 +1,130 @@
-# API Mock Platform
+# AI-Powered API Testing & Mocking Platform
 
-AI-powered API testing and mocking platform. Upload any OpenAPI or Swagger specification and instantly get realistic mock endpoints.
+Upload an OpenAPI or Swagger specification and get a working mock API with realistic response data. The platform gives developers a fast way to build and test against APIs before a production service is ready.
 
-## Stack
+## The problem it solves
 
-- **Backend:** Node.js, Express, Sequelize, PostgreSQL, OpenAI (optional)
-- **Frontend:** React 18, Vite, Tailwind CSS, React Router
-- **Database:** PostgreSQL 15 (Docker)
-- **Mock engine:** Custom realistic data generator with smart schema inference
+Frontend and client developers often need to integrate with an API that is incomplete, unavailable, or still being designed. Writing temporary mock servers and realistic sample data by hand is slow, fragile, and difficult to keep aligned with an API contract.
 
-## Features
+This platform turns an uploaded API specification into live mock endpoints. It uses the response schema to generate data, optionally enhances the output with OpenAI, and remains reliable by falling back to a local realistic-data generator whenever the AI service is unavailable.
 
-- 📤 Upload OpenAPI 3.0 and Swagger 2.0 specifications
-- 📋 Browse and manage uploaded schemas
-- 🔍 Automatically parse endpoints, methods, and response schemas
-- 🎭 Dynamic mock server at `/mock/:schemaId/*`
-- 🧠 Smart fallback that infers response models when specifications are incomplete
-- 📋 Copy mock URLs to the clipboard
-- 🖥️ View formatted mock JSON inline
+## What I built
 
-## Quick start
+- Upload OpenAPI 3.0 and Swagger 2.0 JSON files by drag-and-drop or by pasting JSON.
+- Persist API schemas in PostgreSQL using Sequelize and JSONB.
+- List, search, and inspect all uploaded schemas and their parsed endpoints.
+- Serve dynamic mock APIs at `/mock/:schemaId/*`.
+- Match templated paths, so `/pets/{petId}` works with `/pets/123`.
+- Validate request methods and return `405 Method Not Allowed` with an `Allow` header when needed.
+- Resolve schema references and select useful successful responses.
+- Infer Pet Store-style response models when an incomplete specification omits a success schema.
+- Generate context-aware mock data through OpenAI when configured, with a five-second timeout.
+- Fall back immediately to a zero-dependency realistic data generator if OpenAI is missing, fails, times out, or returns invalid JSON.
+- Provide a responsive React UI with dark mode, mobile navigation, notifications, copy actions, an endpoint tester, and a collapsible JSON viewer.
+
+## Architecture
+
+```text
+React + Vite + Tailwind
+        │ Upload OpenAPI JSON / test mock endpoints
+        ▼
+Node.js + Express API
+        │
+        ├── PostgreSQL 15 (stores schemas as JSONB)
+        ├── OpenAI API (optional contextual mock generation)
+        └── Local mock generator (reliable fallback)
+        │
+        ▼
+GET /mock/:schemaId/{endpoint-path}
+```
+
+## Tech stack
+
+| Layer | Technology |
+| --- | --- |
+| Frontend | React 18, Vite, Tailwind CSS, React Router, Lucide |
+| Backend | Node.js, Express, Sequelize |
+| Database | PostgreSQL 15, Docker Compose, JSONB |
+| AI | OpenAI API (optional) |
+| Deployment | Render (backend) and Vercel (frontend) |
+
+## Key technical decisions
+
+| Decision | Why it matters |
+| --- | --- |
+| Dynamic mock routing | Every uploaded schema becomes a usable mock API without writing new server routes. |
+| AI with a five-second timeout | AI improves realism without allowing an upstream service to block mock responses. |
+| Local fallback generator | The core product remains functional without an OpenAI key or network access. |
+| Smart response inference | Incomplete specifications such as Swagger Pet Store still produce useful responses. |
+| PostgreSQL JSONB | Stores flexible API contracts while retaining database-backed persistence. |
+| Docker Compose for PostgreSQL | Gives contributors a consistent local database with minimal setup. |
+
+## Run locally
+
+Prerequisites: Node.js 18+ and Docker.
 
 ```bash
-# 1. Start PostgreSQL
+# Start PostgreSQL
 docker compose up -d
 
-# 2. Start the backend
+# Start the backend
 cd backend
 cp .env.example .env
-# Add your OPENAI_API_KEY to .env if you want optional AI features
 npm install
 npm run dev
 
-# 3. Start the frontend in a new terminal
+# In another terminal, start the frontend
 cd frontend
-cp .env.example .env
 npm install
 npm run dev
 ```
 
-- Frontend: <http://localhost:5173>
-- Backend: <http://localhost:5000>
-- Mock API: `http://localhost:5000/mock/{schema-id}/{endpoint-path}`
+Open <http://localhost:5173>. The backend runs at <http://localhost:5000> and exposes a health check at <http://localhost:5000/health>.
 
 ## Environment variables
 
+Create `backend/.env` from `.env.example` and set the values for your environment.
+
 | Variable | Description |
 | --- | --- |
-| `PORT` | Backend port (default: `5000`) |
-| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS` | PostgreSQL credentials |
-| `OPENAI_API_KEY` | OpenAI API key for optional GPT mock generation |
-| `VITE_API_URL` | Frontend API base URL |
+| `PORT` | Backend port; defaults to `5000`. |
+| `DB_HOST`, `DB_PORT` | PostgreSQL host and port. |
+| `DB_NAME`, `DB_USER`, `DB_PASS` | PostgreSQL database credentials. |
+| `OPENAI_API_KEY` | Optional key for AI-generated mock data. The local generator is used when omitted or unavailable. |
+| `VITE_API_URL` | Frontend URL of the deployed backend, for example `https://your-api.onrender.com`. |
+
+## Deployment
+
+### Backend: Render
+
+1. Create a PostgreSQL database in Render (or use another managed PostgreSQL provider).
+2. Create a Render **Web Service** from this repository.
+3. Set the root directory to `backend` and use the included `backend/Dockerfile`.
+4. Add `NODE_ENV=production`, the `DB_*` settings, and optionally `OPENAI_API_KEY`.
+5. Set the health-check path to `/health`, then deploy.
+
+### Frontend: Vercel
+
+1. Import this repository in Vercel.
+2. Set the root directory to `frontend` and select the Vite framework preset.
+3. Add `VITE_API_URL` with the deployed Render backend URL.
+4. Deploy.
+
+After deployment, update the backend CORS policy if you want to restrict it to the Vercel domain.
 
 ## Project structure
 
 ```text
 api-mock-platform/
 ├── backend/
-│   ├── config/         # Database configuration
-│   ├── controllers/    # Request handlers
-│   ├── middleware/     # Error handling
-│   ├── models/         # Sequelize models
-│   ├── routes/         # API routes
-│   ├── services/       # Mock generator and OpenAI service
-│   ├── utils/          # Reference resolver
-│   └── server.js       # Entry point
-├── frontend/
-│   └── src/
-│       ├── pages/      # Upload, list, and detail views
-│       └── App.jsx
-├── docker-compose.yml
+│   ├── controllers/       # Schema and dynamic mock request handlers
+│   ├── services/          # OpenAI integration and local fallback generator
+│   ├── utils/             # OpenAPI reference resolution
+│   └── Dockerfile         # Render-ready production container
+├── frontend/src/
+│   ├── components/        # JSON viewer, method badges, notifications
+│   └── pages/             # Upload, schema list, and schema detail views
+├── docker-compose.yml     # Local PostgreSQL service
 └── README.md
 ```
 

@@ -1,6 +1,6 @@
 /**
- * Custom realistic mock data generator from JSON Schema
- * Zero dependencies — no faker install required
+ * Custom realistic mock data generator from JSON Schema.
+ * Used as a fallback when OpenAI is unavailable or fails.
  */
 
 const FIRST_NAMES = [
@@ -40,7 +40,7 @@ const generateUUID = () => {
  * @param {Object} schema - JSON Schema object
  * @returns {any} - Mock data matching the schema
  */
-export const generateFromSchema = (schema) => {
+export const generateFallback = (schema) => {
   if (!schema) return null;
   return generateValue(schema, '');
 };

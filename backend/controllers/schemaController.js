@@ -17,7 +17,6 @@ export const uploadSchema = async (req, res, next) => {
     next(error);
   }
 };
-
 export const getAllSchemas = async (req, res, next) => {
   try {
     const schemas = await Schema.findAll({ order: [['createdAt', 'DESC']] });
@@ -106,6 +105,37 @@ export const getEndpoints = async (req, res, next) => {
     }
 
     return res.json(endpoints);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateSchema = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const schema = await Schema.findByPk(id);
+    if (!schema) {
+      return res.status(404).json({ error: 'Schema not found' });
+    }
+    const { name, openapi_json } = req.body;
+    if (name !== undefined) schema.name = name;
+    if (openapi_json !== undefined) schema.openapi_json = openapi_json;
+    await schema.save();
+    return res.json(schema);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteSchema = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const schema = await Schema.findByPk(id);
+    if (!schema) {
+      return res.status(404).json({ error: 'Schema not found' });
+    }
+    await schema.destroy();
+    return res.json({ message: 'Schema deleted successfully', id });
   } catch (error) {
     next(error);
   }
