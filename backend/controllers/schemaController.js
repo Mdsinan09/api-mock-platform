@@ -71,14 +71,29 @@ export const getEndpoints = async (req, res, next) => {
         const responses = details.responses || {};
         const responseEntries = {};
 
-        for (const [statusCode, response] of Object.entries(responses)) {
-          const content = response.content || {};
-          const jsonContent = content['application/json'] || {};
-          responseEntries[statusCode] = {
-            description: response.description || '',
-            schema: jsonContent.schema || null
-          };
+                  for (const [statusCode, response] of Object.entries(responses)) {
+        // Support both OpenAPI 3.0 (content.*.schema) and Swagger 2.0 (schema directly)
+        let responseSchema = null;
+
+        if (response.content) {
+          // OpenAPI 3.0
+          const content = response.content;
+          const jsonContent =
+            content['application/json'] ||
+            content['application/json; charset=utf-8'] ||
+            content['*/*'] ||
+            Object.values(content)[0];
+          responseSchema = jsonContent?.schema || null;
+        } else if (response.schema) {
+          // Swagger 2.0 (Pet Store API format)
+          responseSchema = response.schema;
         }
+
+        responseEntries[statusCode] = {
+          description: response.description || '',
+          schema: responseSchema
+        };
+      }
 
         endpoints.push({
           path,

@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 
 import sequelize from './config/database.js';
 import schemaRoutes from './routes/schemaRoutes.js';
+import mockRoutes from './routes/mockRoutes.js';
 import errorHandler from './middleware/errorHandler.js';
 
 dotenv.config();
@@ -23,6 +24,7 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api/schemas', schemaRoutes);
+app.use('/mock', mockRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
