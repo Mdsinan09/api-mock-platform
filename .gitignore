@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment
+.env
+*/.env
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+
+# Docker
+docker-volumes/
+
+# Build
+dist/
+build/

@@ -1,0 +1,26 @@
+# Docker Compose configuration for API Mock Platform
+# Spins up PostgreSQL 15 with persistent volume storage
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: apimock-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: apimock
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d apimock"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    driver: local
