@@ -1,5 +1,8 @@
 # AI-Powered API Testing & Mocking Platform
 
+🚀 **Live Web App**: [https://api-mock-platform.vercel.app](https://api-mock-platform.vercel.app)  
+⚡ **Live Backend API**: [https://api-mock-platform.onrender.com](https://api-mock-platform.onrender.com/health)
+
 Upload an OpenAPI or Swagger specification and get a working mock API with realistic response data. The platform gives developers a fast way to build and test against APIs before a production service is ready.
 
 ## The problem it solves
