@@ -8,7 +8,15 @@ dotenv.config();
  * Uses env vars for host, port, credentials
  */
 const dialectOptions = {};
-if (process.env.DB_SSL === 'true' || process.env.DB_SSL === 'require') {
+const isProd = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+const sslDisabled = process.env.DB_SSL === 'false';
+
+if (isProd && !sslDisabled) {
+  dialectOptions.ssl = {
+    require: true,
+    rejectUnauthorized: false,
+  };
+} else if (process.env.DB_SSL === 'true' || process.env.DB_SSL === 'require') {
   dialectOptions.ssl = {
     require: true,
     rejectUnauthorized: false,
